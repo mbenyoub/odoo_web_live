@@ -10,26 +10,34 @@ class AbstractLive(osv.AbstractModel):
         'postgres.notification',
     ]
     _postgres_channel = 'weblive'
-    _web_live_comple_reload_field = None
+    _web_live_comple_reload_field = []
 
     def create(self, cr, uid, values, context=None):
         id = super(AbstractLive, self).create(
             cr, uid, values, context=context)
-        self.notify(cr, uid, method='create', record=id, model=self._name)
+        kwargs = dict(method='create', model=self._name)
+        if self._web_live_comple_reload_field:
+            res = self.read(cr, uid, id, self._web_live_comple_reload_field,
+                            load='_classic_write', context=context)
+            kwargs.update(res)
+        self.notify(cr, uid, **kwargs)
         return id
 
     def write(self, cr, uid, ids, values, context=None):
         res = super(AbstractLive, self).write(cr, uid, ids, values, context=context)
 
-        group_by = values.get(self._web_live_comple_reload_field, False)
+        kwargs = dict(method='create', model=self._name, ids=ids)
+        for f in self._web_live_comple_reload_field:
+            if f in values.keys():
+                kwargs[f] = values[f]
 
-        self.notify(
-            cr, uid, method='write', record=ids, model=self._name, group_by=group_by)
+        self.notify(cr, uid, **kwargs)
+        print kwargs
         return res
 
     def unlink(self, cr, uid, ids, context=None):
         res = super(AbstractLive, self).unlink(cr, uid, ids, context=context)
-        self.notify(cr, uid, method='unlink', record=ids, model=self._name)
+        self.notify(cr, uid, method='unlink', ids=ids, model=self._name)
         return res
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
