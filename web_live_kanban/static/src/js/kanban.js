@@ -1,4 +1,17 @@
 openerp.web_live_kanban = function (instance) {
+
+    function get_sequence(live, record) {
+        var sequence = record.group.records.length;
+        if (live.sequence != undefined) {
+            sequence = live.sequence;
+        } else {
+            if (record.record.sequence) {
+                sequence = record.record.sequence.raw_value;
+            }
+        }
+        return sequence;
+    }
+
     instance.web_kanban.KanbanView.include({
         start: function() {
             this._super.apply(this, arguments);
@@ -19,7 +32,8 @@ openerp.web_live_kanban = function (instance) {
                                 group.do_add_records(records);
                                 _(group.records).each(function (record) {
                                     if (record.id == live.id) {
-                                        self.live_DndD_moved(record, live[self.group_by], live['sequence'] || record.record.sequence.raw_value);
+                                        var sequence = get_sequence(live, record);
+                                        self.live_DndD_moved(record, live[self.group_by], sequence);
                                     }
                                 });
                             }); 
@@ -33,9 +47,9 @@ openerp.web_live_kanban = function (instance) {
                         _(self.groups).each(function (group) {
                             _(group.records).each(function (record) {
                                 if (record.id == id) {
-                                    group_id = live[self.group_by] || record.group.value;
-                                    sequence = live.sequence || record.record.sequence.raw_value;
-                                    self.live_DndD_moved(record, group_id, sequence)
+                                    var group_id = live[self.group_by] || record.group.value;
+                                    var sequence = get_sequence(live, record);
+                                    self.live_DndD_moved(record, group_id, sequence);
                                     record.do_reload();
                                 }
                             });
