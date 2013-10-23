@@ -24,7 +24,6 @@ def live_connect(session):
             if live['method'] in ('create', 'write'):
                 # let time to commit
                 sleep(0.5)
-                print live
             session.broadcast_event('live_' + live['method'], live)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -26,13 +26,12 @@ class AbstractLive(osv.AbstractModel):
     def write(self, cr, uid, ids, values, context=None):
         res = super(AbstractLive, self).write(cr, uid, ids, values, context=context)
 
-        kwargs = dict(method='create', model=self._name, ids=ids)
+        kwargs = dict(method='write', model=self._name, ids=ids)
         for f in self._web_live_comple_reload_field:
             if f in values.keys():
                 kwargs[f] = values[f]
 
         self.notify(cr, uid, **kwargs)
-        print kwargs
         return res
 
     def unlink(self, cr, uid, ids, context=None):
