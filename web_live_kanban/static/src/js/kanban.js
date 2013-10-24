@@ -26,17 +26,20 @@ openerp.web_live_kanban = function (instance) {
                                     return;
                                 }
                             });
-                            group.dataset.read_ids([live.id], group.view.fields_keys)
-                            .done(function (records) {
-                                group.view.dataset.ids.push(live.id);
-                                group.do_add_records(records);
-                                _(group.records).each(function (record) {
-                                    if (record.id == live.id) {
-                                        var sequence = get_sequence(live, record);
-                                        self.live_DndD_moved(record, live[self.group_by], sequence);
-                                    }
-                                });
-                            }); 
+                            self.live_action_by_domain(live.id)
+                            .then( function () {
+                                group.dataset.read_ids([live.id], group.view.fields_keys)
+                                .done(function (records) {
+                                    group.view.dataset.ids.push(live.id);
+                                    group.do_add_records(records);
+                                    _(group.records).each(function (record) {
+                                        if (record.id == live.id) {
+                                            var sequence = get_sequence(live, record);
+                                            self.live_DndD_moved(record, live[self.group_by], sequence);
+                                        }
+                                    });
+                                }); 
+                            })
                         }
                     });
                 }
@@ -71,6 +74,18 @@ openerp.web_live_kanban = function (instance) {
                     });
                 }
             });
+        },
+        live_action_by_domain: function(id) {
+            var def = $.Deferred();
+            var domain = [].concat(this.search_domain, [['id', '=', id]]);
+            this.dataset._model.call('search', [domain]).then( function(ids) {
+                if (ids.length) {
+                    def.resolve();
+                } else {
+                    def.reject();
+                }
+            });
+            return def;
         },
         live_DndD_moved: function(record, group_id, sequence) {
             // reorder record in group at the new sequence
