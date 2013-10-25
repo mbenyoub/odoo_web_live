@@ -1,18 +1,5 @@
 openerp.web_live_kanban = function (instance) {
 
-    function get_sequence(live, record) {
-        console.log('To remove')
-        var sequence = record.group.records.length;
-        if (live.sequence != undefined) {
-            sequence = live.sequence;
-        } else {
-            if (record.record.sequence) {
-                sequence = record.record.sequence.raw_value;
-            }
-        }
-        return sequence;
-    }
-
     instance.web_kanban.KanbanView.include({
         start: function() {
             this._super.apply(this, arguments);
@@ -28,38 +15,31 @@ openerp.web_live_kanban = function (instance) {
                     }
                 }
             });
-            instance.web.longpolling_socket.on('live_write', function (live) {
-                if (self.dataset._model.name == live.model) {
-                    _(live.ids).each(function (id) {
-                        console.log('To refactor')
-                        var current_record = null;
-                        _(self.groups).each(function (group) {
-                            _(group.records).each(function (record) {
-                                if (record.id == id) {
-                                    current_record = record;
-                                    // ##############################
-                                    var group_id = live[self.group_by] || record.group.value;
-                                    var sequence = get_sequence(live, record);
-                                    self.live_DndD_moved(record, group_id, sequence);
-                                    record.do_reload();
-                                }
-                            });
-                        });
-                        self.live_action_by_domain(id)
+            instance.web.longpolling_socket.on('live_write', function (event) {
+                if (self.dataset._model.name == event.model) {
+                    _(event.ids).each(function (id) {
+                        var card = self.live_get_card(id);
+                        self.live_card_is_in_domain_search(id)
                         .then( function () {
-                            if (current_record) {
-                                console.log('Update card')
+                            if (card) {
+                                var group_id = event[self.group_by] || card.group.value;
+                                var sequence = self.live_get_sequence(event, card);
+                                self.live_card_moved(card, group_id, sequence);
+                                card.do_reload();
                             } else {
                                 if (_.indexOf(self.card_to_create, id) == -1) {
-                                    console.log('Create card')
+                                    event.id = id;
+                                    if (event[self.group_id]) {
+                                        self.live_create_card(event);
+                                    } else {
+                                        console.log('Make to get group by')
+                                    }
                                 }
                             }
                         })
                         .fail( function () {
-                            if (current_record) {
-                                console.log('Remove card')
-                            } else {
-                                console.log('Make nothing')
+                            if (card) {
+                                self.live_remove_card(card);
                             }
                         });
                     });
@@ -73,51 +53,6 @@ openerp.web_live_kanban = function (instance) {
                     });
                 }
             });
-        },
-        live_action_by_domain: function(id) {
-            console.log('To remove')
-            var def = $.Deferred();
-            var domain = [].concat(this.search_domain, [['id', '=', id]]);
-            this.dataset._model.call('search', [domain]).then( function(ids) {
-                if (ids.length) {
-                    def.resolve();
-                } else {
-                    def.reject();
-                }
-            });
-            return def;
-        },
-        live_DndD_moved: function(record, group_id, sequence) {
-            console.log('To remove')
-            // reorder record in group at the new sequence
-            var old_group = record.group;
-            var new_group = null;
-            var old_sequence = _.indexOf(old_group.records, record);
-            if (record.group.value == group_id) {
-                new_group = old_group;
-            } else {
-                _(this.groups).each(function (group) {
-                    if (group.value == group_id) {
-                        new_group = group;
-                    }
-                });
-                record.group = new_group;
-            }
-            if (old_sequence != sequence || old_group != new_group) {
-                // move the ticket
-                old_group.records.splice(old_sequence, 1);
-                new_group.records.splice(sequence, 0, record);
-
-                var $old_group = old_group.$records.find('.oe_kanban_column_cards');
-                $old_group.children()[old_sequence].remove();
-                var $new_group = new_group.$records.find('.oe_kanban_column_cards');
-
-                if ($new_group.children().length <= sequence || $new_group.children().length == 0) {
-                    record.$el.appendTo($new_group);
-                } else {
-                    record.$el.insertBefore($new_group.children()[sequence]);
-                }
-            }
         },
         live_create_card: function(liveevent) {
             var self = this;
