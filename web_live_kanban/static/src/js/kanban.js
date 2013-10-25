@@ -84,15 +84,8 @@ openerp.web_live_kanban = function (instance) {
             instance.web.longpolling_socket.on('live_unlink', function (live) {
                 if (self.dataset._model.name == live.model) {
                     _(live.ids).each(function (id) {
-                        console.log('To replace by live_get_card + live_remove_card')
-                        _(self.groups).each(function (group) {
-                            _(group.records).each(function (record) {
-                                if (record.id == id) {
-                                    group.remove_record(id);
-                                    record.destroy(); 
-                                }
-                            });
-                        });
+                        card = self.live_get_card(id);
+                        self.live_remove_card(card);
                     });
                 }
             });
@@ -145,8 +138,9 @@ openerp.web_live_kanban = function (instance) {
         live_create_card: function(liveevent) {
             console.log('Create a card');
         },
-        live_remove_card: function(id) {
-            console.log('Remove a card');
+        live_remove_card: function(card) {
+            card.group.remove_record(card.id);
+            card.destroy(); 
         },
         live_card_moved: function(card, group_id, sequence) {
             console.log('New name of live_DndD_moved');
@@ -155,7 +149,15 @@ openerp.web_live_kanban = function (instance) {
             console.log('Return the group');
         },
         live_get_card: function(id) {
-            console.log('Return the card');
+            var card = null;
+            _(this.groups).each(function (group) {
+                _(group.records).each(function (record) {
+                    if (record.id == id) {
+                        card = record;
+                    }
+                });
+            });
+            return card;
         },
         live_get_sequence: function(liveevent) {
             console.log('New fnct of get_sequence');
