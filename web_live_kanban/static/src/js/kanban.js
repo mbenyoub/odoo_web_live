@@ -31,7 +31,12 @@ openerp.web_live_kanban = function (instance) {
                                     event.id = id;
                                     if (event[self.group_by]) self.live_create_card(event);
                                     else {
-                                        console.log('Make to get group by')
+                                        self.dataset._model.call(
+                                            'read', [id, [self.group_by]], {load: '_classic_write'})
+                                        .then( function (record) {
+                                            event[self.group_by] = record[self.group_by];
+                                            self.live_create_card(event);
+                                        });
                                     }
                                 }
                             }
