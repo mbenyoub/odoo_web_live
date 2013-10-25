@@ -29,18 +29,15 @@ openerp.web_live_kanban = function (instance) {
                             } else {
                                 if (_.indexOf(self.card_to_create, id) == -1) {
                                     event.id = id;
-                                    if (event[self.group_id]) {
-                                        self.live_create_card(event);
-                                    } else {
+                                    if (event[self.group_by]) self.live_create_card(event);
+                                    else {
                                         console.log('Make to get group by')
                                     }
                                 }
                             }
                         })
                         .fail( function () {
-                            if (card) {
-                                self.live_remove_card(card);
-                            }
+                            if (card) self.live_remove_card(card);
                         });
                     });
                 }
@@ -81,38 +78,26 @@ openerp.web_live_kanban = function (instance) {
             var old_group = card.group;
             var new_group = null;
             var old_sequence = _.indexOf(old_group.records, card);
-            if (card.group.value == group_id) {
-                new_group = old_group;
-            } else {
-                _(this.groups).each(function (group) {
-                    if (group.value == group_id) {
-                        new_group = group;
-                    }
-                });
+            if (card.group.value == group_id) new_group = old_group;
+            else {
+                new_group = this.live_get_group(group_id);
                 card.group = new_group;
             }
             if (old_sequence != sequence || old_group != new_group) {
-                // move the ticket
                 old_group.records.splice(old_sequence, 1);
                 new_group.records.splice(sequence, 0, card);
-
                 var $old_group = old_group.$records.find('.oe_kanban_column_cards');
                 $old_group.children()[old_sequence].remove();
                 var $new_group = new_group.$records.find('.oe_kanban_column_cards');
-
                 if ($new_group.children().length <= sequence || $new_group.children().length == 0) {
                     card.$el.appendTo($new_group);
-                } else {
-                    card.$el.insertBefore($new_group.children()[sequence]);
-                }
+                } else card.$el.insertBefore($new_group.children()[sequence]);
             }
         },
         live_get_group: function(id) {
             var g = null;
             _(this.groups).each(function (group) {
-                if (group.value == id) {
-                    g = group;
-                }
+                if (group.value == id) g = group;
             });
             return g;
         },
@@ -120,33 +105,23 @@ openerp.web_live_kanban = function (instance) {
             var card = null;
             _(this.groups).each(function (group) {
                 _(group.records).each(function (record) {
-                    if (record.id == id) {
-                        card = record;
-                    }
+                    if (record.id == id) card = record;
                 });
             });
             return card;
         },
         live_get_sequence: function(liveevent, card) {
             var sequence = card.group.records.length;
-            if (liveevent.sequence != undefined) {
-                sequence = liveevent.sequence;
-            } else {
-                if (card.record.sequence) {
-                    sequence = card.record.sequence.raw_value;
-                }
-            }
+            if (liveevent.sequence != undefined) sequence = liveevent.sequence;
+            else if (card.record.sequence) sequence = card.record.sequence.raw_value;
             return sequence;
         },
         live_card_is_in_domain_search: function(id) {
             var def = $.Deferred();
             var domain = [].concat(this.search_domain, [['id', '=', id]]);
             this.dataset._model.call('search', [domain]).then( function(ids) {
-                if (ids.length) {
-                    def.resolve();
-                } else {
-                    def.reject();
-                }
+                if (ids.length) def.resolve();
+                else def.reject();
             });
             return def;
         },
