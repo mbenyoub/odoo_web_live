@@ -20,7 +20,7 @@ class AbstractLive(osv.AbstractModel):
             res = self.read(cr, uid, id, self._web_live_comple_reload_field,
                             load='_classic_write', context=context)
             kwargs.update(res)
-        self.notify(cr, uid, **kwargs)
+        self.committed_notify(cr, uid, **kwargs)
         return id
 
     def write(self, cr, uid, ids, values, context=None):
@@ -31,12 +31,12 @@ class AbstractLive(osv.AbstractModel):
             if f in values.keys():
                 kwargs[f] = values[f]
 
-        self.notify(cr, uid, **kwargs)
+        self.committed_notify(cr, uid, **kwargs)
         return res
 
     def unlink(self, cr, uid, ids, context=None):
         res = super(AbstractLive, self).unlink(cr, uid, ids, context=context)
-        self.notify(cr, uid, method='unlink', ids=ids, model=self._name)
+        self.committed_notify(cr, uid, method='unlink', ids=ids, model=self._name)
         return res
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

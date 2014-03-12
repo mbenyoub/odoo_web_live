@@ -16,14 +16,10 @@ class LiveAdapter(AbstractAdapter):
 
 @LongPollingNameSpace.on('live', adapterClass=LiveAdapter, eventtype='connect')
 def live_connect(session):
-    from gevent import sleep
     while True:
         lives = session.listen(session.uid)
         session.validate(True)
         for live in lives:
-            if live['method'] in ('create', 'write'):
-                # let time to commit
-                sleep(0.5)
             session.broadcast_event('live_' + live['method'], live)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
