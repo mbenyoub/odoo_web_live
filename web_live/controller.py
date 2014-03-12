@@ -20,6 +20,6 @@ def live_connect(session):
         lives = session.listen(session.uid)
         session.validate(True)
         for live in lives:
-            session.broadcast_event('live_' + live['method'], live)
+            session.broadcast_event('get_live_changed', live)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

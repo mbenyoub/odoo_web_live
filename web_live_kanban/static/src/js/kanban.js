@@ -5,17 +5,8 @@ openerp.web_live_kanban = function (instance) {
             this._super.apply(this, arguments);
             var self = this;
             this.card_to_create = [];
-            instance.web.longpolling_socket.on('live_create', function (event) {
-                if (self.dataset._model.name == event.model) {
-                    if (!self.live_get_card(event.id)) {
-                        self.live_card_is_in_domain_search(event.id)
-                        .then( function () {
-                            self.live_create_card(event);
-                        })
-                    }
-                }
-            });
-            instance.web.longpolling_socket.on('live_write', function (event) {
+            instance.web.longpolling_socket.on('get_live_changed', function (event) {
+                console.log('plop')
                 if (self.dataset._model.name == event.model) {
                     _(event.ids).each(function (id) {
                         var card = self.live_get_card(id);
@@ -44,14 +35,6 @@ openerp.web_live_kanban = function (instance) {
                         .fail( function () {
                             if (card) self.live_remove_card(card);
                         });
-                    });
-                }
-            });
-            instance.web.longpolling_socket.on('live_unlink', function (event) {
-                if (self.dataset._model.name == event.model) {
-                    _(event.ids).each(function (id) {
-                        card = self.live_get_card(id);
-                        self.live_remove_card(card);
                     });
                 }
             });
