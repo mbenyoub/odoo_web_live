@@ -16,6 +16,7 @@ openerp.web_live_kanban = function (instance) {
                 }
             });
             instance.web.longpolling_socket.on('live_write', function (event) {
+                console.error(event)
                 if (self.dataset._model.name == event.model) {
                     _(event.ids).each(function (id) {
                         var card = self.live_get_card(id);
