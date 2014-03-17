@@ -4,11 +4,14 @@ openerp.web_live_kanban = function (instance) {
         start: function() {
             this._super.apply(this, arguments);
             var self = this;
-            this.card_to_create = [];
+            this.card_in_modification = {}
             instance.web.longpolling_socket.on('get_live_changed', function (event) {
                 console.log('plop')
                 if (self.dataset._model.name == event.model) {
                     _(event.ids).each(function (id) {
+                        if (self.card_in_modification[id] == true) return
+
+                        self.card_in_modification[id] = true;
                         var card = self.live_get_card(id);
                         self.live_card_is_in_domain_search(id)
                         .then( function () {
@@ -17,18 +20,16 @@ openerp.web_live_kanban = function (instance) {
                                 var sequence = self.live_get_sequence(event, card);
                                 self.live_card_moved(card, group_id, sequence);
                                 card.do_reload();
+                                self.card_in_modification[id] = false;
                             } else {
-                                if (_.indexOf(self.card_to_create, id) == -1) {
-                                    event.id = id;
-                                    if (event[self.group_by]) self.live_create_card(event);
-                                    else {
-                                        self.dataset._model.call(
-                                            'read', [id, [self.group_by]], {load: '_classic_write'})
-                                        .then( function (record) {
-                                            event[self.group_by] = record[self.group_by];
-                                            self.live_create_card(event);
-                                        });
-                                    }
+                                if (event[self.group_by]) self.live_create_card(event, id);
+                                else {
+                                    self.dataset._model.call(
+                                        'read', [id, [self.group_by]], {load: '_classic_write'})
+                                    .then( function (record) {
+                                        event[self.group_by] = record[self.group_by];
+                                        self.live_create_card(event, id);
+                                    });
                                 }
                             }
                         })
@@ -39,27 +40,26 @@ openerp.web_live_kanban = function (instance) {
                 }
             });
         },
-        live_create_card: function(liveevent) {
+        live_create_card: function(liveevent, card_id) {
             var self = this;
-            this.card_to_create.push(liveevent.id);
             group = self.live_get_group(liveevent[this.group_by]);
             if (group) {
-                group.dataset.read_ids([liveevent.id], group.view.fields_keys)
+                group.dataset.read_ids([card_id], group.view.fields_keys)
                 .done(function (records) {
-                    group.view.dataset.ids.push(liveevent.id);
+                    group.view.dataset.ids.push(card_id);
                     group.do_add_records(records);
-                    var card = self.live_get_card(liveevent.id);
+                    var card = self.live_get_card(card_id);
                     var sequence = self.live_get_sequence(liveevent, card);
                     var group_by = liveevent[self.group_by];
                     self.live_card_moved(card, group_by, sequence);
-                    var index = _.indexOf(self.card_to_create, liveevent);
-                    self.card_to_create.splice(index, 1);
+                    self.card_in_modification[card_id] = false;
                 });
             }; 
         },
         live_remove_card: function(card) {
             card.group.remove_record(card.id);
             card.destroy(); 
+            this.card_in_modification[card.id] = false;
         },
         live_card_moved: function(card, group_id, sequence) {
             // reorder card in group at the new sequence
