@@ -35,6 +35,9 @@
         'web',
         'web_longpolling',
     ],
+    'update_xml': [
+        'setting.xml',
+    ],
     'installable': True,
     'application': False,
     'auto_install': False,

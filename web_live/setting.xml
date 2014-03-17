@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record id="view_web_live_config_form" model="ir.ui.view">
+            <field name="name">web.live.config.form</field>
+            <field name="model">web.live.config</field>
+            <field name="arch" type="xml">
+                <form string="Web Live" version="7.0">
+                    <header>
+                        <button string="Apply" type="object" name="execute" class="oe_highlight"/>
+                        or
+                        <button string="Cancel" type="object" name="cancel" class="oe_link"/>
+                    </header>
+                    <div class="oe_title">
+                        <h1>
+                            <label string="Web live"/>
+                        </h1>
+                    </div>
+                    <separator string="Type of view"/>
+                    <field name="module_web_live_kanban"/>
+                    <label for="module_web_live_kanban"/>
+                    <separator string="Module"/>
+                    <field name="module_live_crm"/>
+                    <label for="module_live_crm"/>
+                </form>
+            </field>
+        </record>
+        <record model="ir.actions.act_window" id="act_open_web_live_config_view">
+            <field name="name">Web live</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">web.live.config</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">inline</field>
+            <field name="view_id" ref="view_web_live_config_form"/>
+        </record>
+        <menuitem id="menu_web_live_config"
+            parent="base.menu_config"
+            sequence="10"
+            action="act_open_web_live_config_view"/>
+    </data>
+</openerp>
