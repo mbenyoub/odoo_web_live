@@ -77,7 +77,7 @@ openerp.web_live_kanban = function (instance) {
                 $old_group.children()[old_sequence].remove();
                 var $new_group = new_group.$records.find('.oe_kanban_column_cards');
                 if ($new_group.children().length <= sequence || $new_group.children().length == 0) {
-                    card.$el.appendTo($new_group);
+                    card.$el.appendTo($new_group).css({'opacity':0}).animate({'opacity':1}, 'slow');
                 } else card.$el.insertBefore($new_group.children()[sequence]);
             }
         },
