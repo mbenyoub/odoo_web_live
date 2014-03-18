@@ -6,6 +6,8 @@ openerp.web_live_kanban = function (instance) {
             var self = this;
             this.card_in_modification = {}
             instance.web.longpolling_socket.on('get_live_changed', function (event) {
+                state = event.kanban || false;
+                if (!state) return;
                 if (self.session.uid == event.user_id) return;
                 if (self.dataset._model.name != event.model) return;
                 _(event.ids).each(function (id) {

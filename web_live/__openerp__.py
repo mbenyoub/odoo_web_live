@@ -36,6 +36,7 @@
         'web_longpolling',
     ],
     'update_xml': [
+        'security/ir.model.access.csv',
         'setting.xml',
     ],
     'installable': True,

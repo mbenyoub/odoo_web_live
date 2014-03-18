@@ -33,7 +33,7 @@
     'depends': [
         'base',
         'web',
-        'web_live_kanban',
+        'web_live',
         'crm',
     ],
     'installable': True,
