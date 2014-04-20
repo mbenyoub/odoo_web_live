@@ -27,9 +27,10 @@
     'sequence': 150,
     'category': 'Anybox',
     'description': """
+    Live kanban: tickets move instantly as they are updated on the server
     """,
-    'author': 'ANYBOX',
-    'website': 'www.anybox.fr',
+    'author': 'Anybox',
+    'website': 'http://anybox.fr',
     'depends': [
         'base',
         'web',

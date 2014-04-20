@@ -27,9 +27,10 @@
     'sequence': 150,
     'category': 'Anybox',
     'description': """
+    The base module to enable real-time behaviour in OpenERP
     """,
-    'author': 'ANYBOX',
-    'website': 'www.anybox.fr',
+    'author': 'Anybox',
+    'website': 'http://anybox.fr',
     'depends': [
         'base',
         'web',
