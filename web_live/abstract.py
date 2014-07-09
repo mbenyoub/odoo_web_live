@@ -1,51 +1,41 @@
-# -*- coding: utf-8 -*-
-
-from openerp.osv import osv
+from openerp import models, api
 
 
-class AbstractLive(osv.AbstractModel):
+class AbstractLive(models.AbstractModel):
     _name = 'abstract.live'
     _description = 'Abstract Live'
-    _inherit = [
-        'postgres.notification',
-    ]
-    _postgres_channel = 'weblive'
-    _web_live_comple_reload_field = []
 
-    def committed_notify(self, cr, uid, **kwargs):
+    @api.model
+    def notify(self, kwargs):
         kwargs.update({
             'model': self._name,
-            'user_id': uid,
+            'user_id': self.env.uid,
         })
-        mod = self.pool.get('web.live.model.config')
-        mod_ids = mod.search(cr, uid, [('model_id.model', '=', self._name)])
-        read = mod.read(cr, uid, mod_ids, ['state', 'selected'])
-        kwargs.update(dict((r['state'], r['selected']) for r in read))
-        super(AbstractLive, self).committed_notify(cr, uid, **kwargs)
+        mods = self.env['web.live.model.config'].search(
+            [('model.model', '=', self._name)])
+        kwargs.update({r.view_type: r.isselected for r in mods})
+        self.env['bus.bus'].sendon('web_live', kwargs)
 
-    def create(self, cr, uid, values, context=None):
-        id = super(AbstractLive, self).create(
-            cr, uid, values, context=context)
-        kwargs = dict(ids=[id])
-        kwargs.update(
-            self.read(cr, uid, id, [], load='_classic_write', context=context))
-
-        self.committed_notify(cr, uid, **kwargs)
-        return id
-
-    def write(self, cr, uid, ids, values, context=None):
-        res = super(AbstractLive, self).write(
-            cr, uid, ids, values, context=context)
-
-        kwargs = dict(ids=ids)
-        kwargs.update(values)
-
-        self.committed_notify(cr, uid, **kwargs)
+    @api.model
+    def create(self, values):
+        res = super(AbstractLive, self).create(values)
+        kwargs = dict(ids=[res.id])
+        kwargs.update(res.read(load='_classic_write')[0])
+        self.notify(kwargs)
         return res
 
-    def unlink(self, cr, uid, ids, context=None):
-        res = super(AbstractLive, self).unlink(cr, uid, ids, context=context)
-        self.committed_notify(cr, uid, ids=ids)
+    @api.multi
+    def write(self, values):
+        res = super(AbstractLive, self).write(values)
+        kwargs = dict(ids=[x.id for x in self])
+        kwargs.update(values)
+        self.notify(kwargs)
+        return res
+
+    @api.multi
+    def unlink(self):
+        res = super(AbstractLive, self).unlink()
+        self.notify(ids=[x.id for x in self])
         return res
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
