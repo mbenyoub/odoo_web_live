@@ -14,7 +14,7 @@ class AbstractLive(models.AbstractModel):
         mods = self.env['web.live.model.config'].search(
             [('model.model', '=', self._name)])
         kwargs.update({r.view_type: r.isselected for r in mods})
-        self.env['bus.bus'].sendon('web_live', kwargs)
+        self.env['bus.bus'].sendone('web_live', kwargs)
 
     @api.model
     def create(self, values):
@@ -37,5 +37,3 @@ class AbstractLive(models.AbstractModel):
         res = super(AbstractLive, self).unlink()
         self.notify(ids=[x.id for x in self])
         return res
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

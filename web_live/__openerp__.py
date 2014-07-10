@@ -39,6 +39,7 @@
     'update_xml': [
         'security/ir.model.access.csv',
         'setting.xml',
+        'template.xml',
     ],
     'installable': True,
     'application': False,

@@ -200,22 +200,19 @@ class WebLiveConfig(models.TransientModel):
     # keep old on change api because the same one has use for all field
     # and the field are dynamical
 
-    @api.multi
-    def onchange_type(self, active, *models):
+    def onchange_type(self, cr, uid, ids, active, *models):
         if active:
             return {}
 
         return {'value': dict((m, False) for m in models)}
 
-    @api.multi
-    def onchange_module(self, active, *models):
+    def onchange_module(self, cr, uid, ids, active, *models):
         if active:
             return {}
 
         return {'value': dict((m, False) for m in models)}
 
-    @api.multi
-    def onchange_model(self, active, *modules):
+    def onchange_model(self, cr, uid, ids, active, *modules):
         if not active:
             return {}
 

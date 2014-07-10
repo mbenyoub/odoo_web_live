@@ -1,3 +1,4 @@
+/**
 openerp.web_live_kanban = function (instance) {
 
     instance.web_kanban.KanbanView.include({
@@ -55,11 +56,11 @@ openerp.web_live_kanban = function (instance) {
                     self.live_card_moved(card, group_by, sequence);
                     self.card_in_modification[card_id] = false;
                 });
-            }; 
+            };
         },
         live_remove_card: function(card) {
             card.group.remove_record(card.id);
-            card.destroy(); 
+            card.destroy();
             this.card_in_modification[card.id] = false;
         },
         live_card_moved: function(card, group_id, sequence) {
@@ -116,3 +117,4 @@ openerp.web_live_kanban = function (instance) {
         },
     });
 };
+**/
