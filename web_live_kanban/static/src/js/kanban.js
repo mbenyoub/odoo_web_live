@@ -1,44 +1,50 @@
-/**
 openerp.web_live_kanban = function (instance) {
+    /* WARNING use the old v7 api to include javascript
+        because web_kanban hasn't been migrate yet on the new api */
 
     instance.web_kanban.KanbanView.include({
         start: function() {
             this._super.apply(this, arguments);
-            var self = this;
             this.card_in_modification = {}
-            instance.web.longpolling_socket.on('get_live_changed', function (event) {
-                state = event.kanban || false;
-                if (!state) return;
-                if (self.session.uid == event.user_id) return;
-                if (self.dataset._model.name != event.model) return;
-                _(event.ids).each(function (id) {
-                    if (self.card_in_modification[id] == true) return
+            var model = this.dataset._model.name;
+            openerp.web_live_event.on(
+                'web_live-' + model + '-kanban', this, this.on_get_live_changed);
+        },
+        destroy: function() {
+            var model = this.dataset._model.name;
+            openerp.web_live_event.off(
+                'web_live-' + model + '-kanban', this, this.on_get_live_changed);
+            this._super();
+        },
+        on_get_live_changed: function (event) {
+            var self = this;
+            _(event.ids).each(function (id) {
+                if (self.card_in_modification[id] == true) return
 
-                    self.card_in_modification[id] = true;
-                    var card = self.live_get_card(id);
-                    self.live_card_is_in_domain_search(id)
-                    .then( function () {
-                        if (card) {
-                            var group_id = event[self.group_by] || card.group.value;
-                            var sequence = self.live_get_sequence(event, card);
-                            self.live_card_moved(card, group_id, sequence);
-                            card.do_reload();
-                            self.card_in_modification[id] = false;
-                        } else {
-                            if (event[self.group_by]) self.live_create_card(event, id);
-                            else {
-                                self.dataset._model.call(
-                                    'read', [id, [self.group_by]], {load: '_classic_write'})
-                                .then( function (record) {
-                                    event[self.group_by] = record[self.group_by];
-                                    self.live_create_card(event, id);
-                                });
-                            }
+                self.card_in_modification[id] = true;
+                var card = self.live_get_card(id);
+                self.live_card_is_in_domain_search(id)
+                .then( function () {
+                    if (card) {
+                        var group_id = event[self.group_by] || card.group.value;
+                        var sequence = self.live_get_sequence(event, card);
+                        self.live_card_moved(card, group_id, sequence);
+                        card.do_reload();
+                        self.card_in_modification[id] = false;
+                    } else {
+                        if (event[self.group_by]) self.live_create_card(event, id);
+                        else {
+                            self.dataset._model.call(
+                                'read', [id, [self.group_by]], {load: '_classic_write'})
+                            .then( function (record) {
+                                event[self.group_by] = record[self.group_by];
+                                self.live_create_card(event, id);
+                            });
                         }
-                    })
-                    .fail( function () {
-                        if (card) self.live_remove_card(card);
-                    });
+                    }
+                })
+                .fail( function () {
+                    if (card) self.live_remove_card(card);
                 });
             });
         },
@@ -117,4 +123,3 @@ openerp.web_live_kanban = function (instance) {
         },
     });
 };
-**/

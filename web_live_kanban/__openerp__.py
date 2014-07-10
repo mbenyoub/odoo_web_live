@@ -34,6 +34,7 @@
     'depends': [
         'base',
         'web',
+        'web_kanban',
         'web_live',
     ],
     'data': [

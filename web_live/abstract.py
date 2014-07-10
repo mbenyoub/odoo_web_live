@@ -9,12 +9,15 @@ class AbstractLive(models.AbstractModel):
     def notify(self, kwargs):
         kwargs.update({
             'model': self._name,
-            'user_id': self.env.uid,
         })
         mods = self.env['web.live.model.config'].search(
             [('model.model', '=', self._name)])
         kwargs.update({r.view_type: r.isselected for r in mods})
-        self.env['bus.bus'].sendone('web_live', kwargs)
+        notifies = []
+        for user in self.env.user.search([('id', '!=', self.env.uid)]):
+            notifies.append(('web_live_%d' % user.id, kwargs))
+
+        self.env['bus.bus'].sendmany(notifies)
 
     @api.model
     def create(self, values):
@@ -27,9 +30,13 @@ class AbstractLive(models.AbstractModel):
     @api.multi
     def write(self, values):
         res = super(AbstractLive, self).write(values)
-        kwargs = dict(ids=[x.id for x in self])
-        kwargs.update(values)
-        self.notify(kwargs)
+        if len(values) == 1 and values.get('message_last_post'):
+            pass
+        else:
+            kwargs = dict(ids=[x.id for x in self])
+            kwargs.update(values)
+            self.notify(kwargs)
+
         return res
 
     @api.multi
