@@ -7,12 +7,12 @@ openerp.web_live_kanban = function (instance) {
             this._super.apply(this, arguments);
             this.card_in_modification = {}
             var model = this.dataset._model.name;
-            openerp.web_live_event.on(
+            openerp.bus.bus.on(
                 'web_live-' + model + '-kanban', this, this.on_get_live_changed);
         },
         destroy: function() {
             var model = this.dataset._model.name;
-            openerp.web_live_event.off(
+            openerp.bus.bus.off(
                 'web_live-' + model + '-kanban', this, this.on_get_live_changed);
             this._super();
         },
