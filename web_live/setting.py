@@ -11,8 +11,8 @@ MODULES_TYPES = [
 
 LIVE_STATE = [
     ('kanban', 'Kanban'),
-    #('from', 'Form'),
-    #('tree', 'Tree'),
+    # ('from', 'Form'),
+    # ('tree', 'Tree'),
 ]
 
 
@@ -35,8 +35,8 @@ class WebLiveConfig(osv.TransientModel):
     _columns = {
         # View module
         'module_web_live_kanban': fields.boolean('Kanban'),
-        #'module_web_live_form': fields.boolean('from'),
-        #'module_web_live_tree': fields.boolean('tree'),
+        # 'module_web_live_form': fields.boolean('from'),
+        # 'module_web_live_tree': fields.boolean('tree'),
 
         # Module linked and model linked
         'module_live_crm': fields.boolean('CRM'),
