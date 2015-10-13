@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-
-from openerp.osv import osv, fields
+from openerp import models, fields, api
 from lxml.etree import Element, SubElement, tostring
 
 
@@ -9,53 +7,50 @@ MODULES_TYPES = [
 ]
 
 
-LIVE_STATE = [
+VIEW_TYPE = [
     ('kanban', 'Kanban'),
-    # ('from', 'Form'),
-    # ('tree', 'Tree'),
+    #('from', 'Form'),
+    #('tree', 'Tree'),
 ]
 
 
-class WebLiveModelConfig(osv.Model):
+class WebLiveModelConfig(models.Model):
     _name = 'web.live.model.config'
     _description = 'Configuration by model'
 
-    _columns = {
-        'model_id': fields.many2one('ir.model', 'Model', required=True),
-        'state': fields.selection(LIVE_STATE, 'State', required=True),
-        'selected': fields.boolean('Selected'),
-    }
+    model = fields.Many2one('ir.model', required=True)
+    view_type = fields.Selection(selection=VIEW_TYPE, String='View type',
+                                 required=True)
+    isselected = fields.Boolean('Is selected')
 
 
-class WebLiveConfig(osv.TransientModel):
+class WebLiveConfig(models.TransientModel):
     _name = 'web.live.config'
     _description = 'Web live config'
     _inherit = 'res.config.settings'
 
-    _columns = {
-        # View module
-        'module_web_live_kanban': fields.boolean('Kanban'),
-        # 'module_web_live_form': fields.boolean('from'),
-        # 'module_web_live_tree': fields.boolean('tree'),
+    # View module
+    module_web_live_kanban = fields.Boolean(string='Kanban')
+    # module_web_live_form = fields.Boolean(string='from')
+    # module_web_live_tree = fields.Boolean(string='tree')
 
-        # Module linked and model linked
-        'module_live_crm': fields.boolean('CRM'),
-        'live_crm_lead_kanban': fields.boolean(
-            'CRM lead / Kanban', required=True, module='live_crm', view_type='kanban'),
-        # ...
-    }
+    # Module linked and model linked
+    module_live_crm = fields.Boolean(string='CRM')
+    live_crm_lead_kanban = fields.Boolean(string='CRM lead / Kanban',
+                                          required=True,
+                                          module='live_crm',
+                                          view_type='kanban')
+    # ...
 
-    def default_get(self, cr, uid, fields, context=None):
-        res = super(WebLiveConfig, self).default_get(cr, uid, fields,
-                                                     context=context)
-        mod_obj = self.pool.get('web.live.model.config')
-        mod_ids = mod_obj.search(cr, uid, [], context=context)
+    @api.model
+    def default_get(self, fields):
+        res = super(WebLiveConfig, self).default_get(fields)
         mods = {}
-        for mod in mod_obj.browse(cr, uid, mod_ids, context=context):
-            if mod.model_id.model not in mods:
-                mods[mod.model_id.model] = {}
+        for mod in self.env['web.live.model.config'].search([]):
+            if mod.model.model not in mods:
+                mods[mod.model.model] = {}
 
-            mods[mod.model_id.model][mod.state] = mod.selected
+            mods[mod.model.model][mod.view_type] = mod.isselected
 
         for name in fields:
             if name.startswith('live_'):
@@ -71,10 +66,11 @@ class WebLiveConfig(osv.TransientModel):
 
         return res
 
-    def execute(self, cr, uid, ids, context=None):
-        res = super(WebLiveConfig, self).execute(cr, uid, ids, context=context)
-        read = self.read(cr, uid, ids[0], [], context=context)
-        mod_obj = self.pool.get('web.live.model.config')
+    @api.multi
+    def execute(self):
+        res = super(WebLiveConfig, self).execute()
+        mod_obj = self.env['web.live.model.config']
+        read = self.read()[0]
         for name in read.keys():
             if name.startswith('live_'):
                 column = self._columns[name]
@@ -85,26 +81,25 @@ class WebLiveConfig(osv.TransientModel):
                     model = '.'.join(model.split('_')[:-1])
                     vtype = column.view_type
 
-                    mod_ids = mod_obj.search(
-                        cr, uid, [('model_id.model', '=', model),
-                                  ('state', '=', vtype)], context=context)
-                    if mod_ids:
-                        mod_obj.write(cr, uid, mod_ids, {
-                            'selected': read[name]}, context=context)
+                    mods = mod_obj.search([('model.model', '=', model),
+                                           ('view_type', '=', vtype)])
+                    if mods:
+                        mods.write({'isselected': read[name]})
                     else:
-                        model_ids = self.pool.get('ir.model').search(
-                            cr, uid, [('model', '=', model)], context=context)
+                        models = self.env['ir.model'].search(
+                            [('model', '=', model)])
 
-                        if not model_ids:
+                        if not models:
                             continue
 
-                        mod_obj.create(cr, uid, dict(
-                            model_id=model_ids[0], state=vtype,
-                            selected=read[name]), context=context)
+                        mod_obj.create(dict(
+                            model=models.id, view_type=vtype,
+                            isselected=read[name]))
 
         return res
 
-    def parse_live(self, cr, uid, context=None):
+    @api.model
+    def parse_live(self):
         modules = {}
         types = dict(kanban=[])
 
@@ -125,19 +120,19 @@ class WebLiveConfig(osv.TransientModel):
 
         return modules, types
 
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form',
-                        context=None, toolbar=False, submenu=False):
+    @api.model
+    def fields_view_get(self, view_id=None, view_type='form', toolbar=False,
+                        submenu=False):
         if view_type != 'form':
             return super(WebLiveConfig, self).fields_view_get(
-                cr, uid, view_id=view_id, view_type=view_type, context=context,
-                toolbar=toolbar, submenu=submenu)
+                view_id=view_id, view_type=view_type, toolbar=toolbar,
+                submenu=submenu)
 
         def sets(node, attributes):
             for key, value in attributes:
                 node.set(key, value)
 
-        models_by_modules, models_by_type = self.parse_live(
-            cr, uid, context=context)
+        models_by_modules, models_by_type = self.parse_live()
 
         form = Element('form')
         sets(form, (('string', 'Web live'), ('version', '7.0')))
@@ -160,7 +155,7 @@ class WebLiveConfig(osv.TransientModel):
                          ('on_change', "onchange_type(%s, '%s')" % (
                              module, "', '".join(models_by_type[vtype])))))
 
-        modules = self._get_classified_fields(cr, uid, context=context)
+        modules = self._get_classified_fields()
         modules = [x for x in modules['module']
                    if x[0] not in [y[1] for y in MODULES_TYPES]]
 
@@ -193,7 +188,7 @@ class WebLiveConfig(osv.TransientModel):
                         model, module, mod_vtype))))
 
         arch = tostring(form)
-        fields = self.fields_get(cr, uid, context=context)
+        fields = self.fields_get()
         tb = {'print': [], 'action': [], 'relate': []}
 
         return {
@@ -201,6 +196,9 @@ class WebLiveConfig(osv.TransientModel):
             'fields': fields,
             'toolbar': tb,
         }
+
+    # keep old on change api because the same one has use for all field
+    # and the field are dynamical
 
     def onchange_type(self, cr, uid, ids, active, *models):
         if active:

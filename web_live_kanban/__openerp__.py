@@ -1,7 +1,7 @@
 ###############################################################################
 #
 #    web_notification module for OpenERP, display notification
-#    Copyright (C) 2013 ANYBOX (<http://www.anybox.fr>)
+#    Copyright (C) 2014 ANYBOX (<http://www.anybox.fr>)
 #                         Jean-Sebastien SUZANNE <jssuzanne@anybox.fr>
 #
 #    This file is a part of anybox_login_demo
@@ -23,7 +23,7 @@
 ###############################################################################
 {
     'name': 'Live kanban',
-    'version': '1.0.0',
+    'version': '1.1.0',
     'sequence': 150,
     'category': 'Anybox',
     'description': """
@@ -34,10 +34,11 @@
     'depends': [
         'base',
         'web',
+        'web_kanban',
         'web_live',
     ],
-    'js': [
-        'static/src/js/kanban.js',
+    'data': [
+        'template.xml',
     ],
     'installable': True,
     'application': False,

@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
-from openerp.osv import osv
+from openerp import models
 
 
-class CrmLead(osv.Model):
+class CrmLead(models.Model):
 
     _name = 'crm.lead'
 
@@ -11,5 +9,3 @@ class CrmLead(osv.Model):
         'crm.lead',
         'abstract.live',
     ]
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

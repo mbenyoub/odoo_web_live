@@ -20,7 +20,7 @@
             <field name="view_id" ref="view_web_live_config_form"/>
         </record>
         <menuitem id="menu_web_live_config"
-            parent="base.menu_config"
+            parent="base.menu_administration"
             sequence="10"
             action="act_open_web_live_config_view"/>
     </data>
